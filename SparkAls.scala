@@ -8,44 +8,43 @@ object SparkAls{
 	val F = 10  // features 
 	val ITERATION = 10  //iteration 
 	val LAMBDA = 0.01 // 
-    
 	def updateUser(Index: Int, R: Vector,
-		P: Array[RealVector],Loop: Int): RealVector =
+	P: Array[RealVector],Loop: Int): RealVector =
 	{
-		var left: RealMatrix = new Array2DRowRealMatrix(F, F)
-        var right: RealVector = new ArrayRealVector(F)
+	    var left: RealMatrix = new Array2DRowRealMatrix(F, F)
+            var right: RealVector = new ArrayRealVector(F)
 		
 	    R.foreachActive{
 	    	case (cols, values) => 
 	    	right  = right.add(P(cols).mapMultiply(values))
-	    		val x = P(cols)
-				left = left.add(x.outerProduct(x))  
+	    	val x = P(cols)
+		left = left.add(x.outerProduct(x))  
 	    }
 		 
-		for (d <- 0 until F) {
+	   for (d <- 0 until F) {
 	      left.addToEntry(d, d, LAMBDA)
 	    }
 		new CholeskyDecomposition(left).getSolver.solve(right)
 	}
 	def updateProduct(Index: Int, R: Array[(Long,Vector)],hashPb: Map[Int,Int],
-		U: Array[RealVector],Loop: Int): RealVector =
+	U: Array[RealVector],Loop: Int): RealVector =
 	{
-		var left: RealMatrix = new Array2DRowRealMatrix(F, F)
-        var right: RealVector = new ArrayRealVector(F)
-		if(hashPb.contains(Index))
-		{
-			R(hashPb(Index))._2.foreachActive{
+	    var left: RealMatrix = new Array2DRowRealMatrix(F, F)
+            var right: RealVector = new ArrayRealVector(F)
+	    if(hashPb.contains(Index))
+	    {
+		R(hashPb(Index))._2.foreachActive{
 		    	case (cols, values) => 
 		    	right  = right.add(U(cols).mapMultiply(values)) 
 		    	val x = U(cols)
-				left = left.add(x.outerProduct(x))
+			left = left.add(x.outerProduct(x))
 	    	} 
 	    } 
 		 
-		for (d <- 0 until F) {
+	    for (d <- 0 until F) {
 	      left.addToEntry(d, d, LAMBDA)
 	    }
-		new CholeskyDecomposition(left).getSolver.solve(right)
+	    new CholeskyDecomposition(left).getSolver.solve(right)
 	    
 	}
 	def computeRMSE(R: CoordinateMatrix,U: Array[RealVector],
@@ -73,16 +72,10 @@ object SparkAls{
   		 for(i <- 0 until product.length)
   		 {
   		 	val x = product(i)
-	  		 val y1 = x.dotProduct(fact)
-	  		 println(i+1+"      "+y1)
-	  		// val y2 = sqrt(fact.dotProduct(fact))
-	  		// val y3 = sqrt(x.dotProduct(x))
-	  		// indexRatings += (y1/(y2*y3) -> i)
+	  		val y1 = x.dotProduct(fact)
+	  		println(i+1+"      "+y1)
 	  	 }
-  		/* indexRatings.toList.sorted.foreach {
-			case (key, value) =>
-				println(key + " = " + value)
-		}*/
+
   	}
 	def main(args: Array[String]) {
  
@@ -100,8 +93,6 @@ object SparkAls{
 
 		val U = Rmatrix.numRows().toInt
 		val P = Rmatrix.numCols().toInt
-	
-
 		val R = Rmatrix.toIndexedRowMatrix().rows
 		val Rt = Rmatrix.transpose().toIndexedRowMatrix().rows //transpose RDD
 		val Ri = R.map{
@@ -119,8 +110,8 @@ object SparkAls{
 		var Pb = Array.fill(P)(randomVector(F))
 		//Initialize p matrix
 		 
-    	var bUb = sc.broadcast(Ub)
-    	var bPb = sc.broadcast(Pb)
+    	        var bUb = sc.broadcast(Ub)
+    	        var bPb = sc.broadcast(Pb)
 		 
 
 		for(it <- 1 to ITERATION )  //set the interations 
@@ -136,14 +127,12 @@ object SparkAls{
 		val mse = computeRMSE(Rmatrix,Ub,Pb,U,P)  
 	   	println(mse)
 	   	predictProduct(Ub,Pb,F)
-
-
 		spark.stop()
 	}
 	private def randomVector(n: Int): RealVector =
-    new ArrayRealVector(Array.fill(n)(math.random))
+           new ArrayRealVector(Array.fill(n)(math.random))
 
-    private def randomMatrix(rows: Int, cols: Int): RealMatrix =
-    new Array2DRowRealMatrix(Array.fill(rows, cols)(math.random))
+        private def randomMatrix(rows: Int, cols: Int): RealMatrix =
+           new Array2DRowRealMatrix(Array.fill(rows, cols)(math.random))
 
 }
