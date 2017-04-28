@@ -194,7 +194,7 @@ object SparkAls{
  		val content = "======================"+
  		"\r\nfile "+ url +
  		"\r\ncore "+ args(1).toInt +
- 		"\r\nun time is "+ (end -start)/1000+" ms"+
+ 		"\r\nun time is "+ (end -start)/1000+" s"+
  		"\r\n======================"
  		file.write(content)
  		file.close()
